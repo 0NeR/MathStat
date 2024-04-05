@@ -34,8 +34,8 @@ def norm_func(sample_cur, teta1_cur, teta2_cur):
     y1 = sps.norm.cdf(x = x1, loc = teta1_cur, scale = teta2_cur)
     return np.vstack((x1, y1)).T
 
-
-# Константы задачи
+print("рассмотрим криетрий согласия Пирсона для сложной гипотезы")
+# Константы нашей задачи
 xn = np.array([0]*5 + [1]*8 + [2]*6 + [3]*12 + [4]*14 + [5]*18 + [6]*11 + [7]*6 + [8]*13 + [9]*7)
 n = xn.size
 sqrt_n = n ** 0.5
@@ -52,14 +52,16 @@ pairs = np.array([[[-np.inf]*5 + [1]*8 + [2]*6 + [3]*12 + [4]*14
 
 pairs = np.squeeze(pairs, axis=1)
 
-print("(1) : ", n)
+print("(1) : n  = ", n)
 for i in range(len(pairs[0])//10):
     print(pairs[0][i], pairs[1][i])
 
 print()
-print("(2) : ", get_norm_pdf(-np.inf, 4, 3))
+print("(2) : ")
+print(get_norm_pdf(-np.inf, 4, 3))
 print()
-print("(3) : ", integr.quad(get_norm_pdf, -np.inf, 0, args = (4, 3))[0])
+print("(3) : ")
+print(integr.quad(get_norm_pdf, -np.inf, 0, args = (4, 3))[0])
     
 # Максимизируем логарифм
 optima = opt.minimize(fun = optLog,  x0 = [5, 2], args = (pairs,)) # из графика выборки возьмем 5, 2*sigma (95%) = 4
@@ -67,7 +69,8 @@ optima = opt.minimize(fun = optLog,  x0 = [5, 2], args = (pairs,)) # из гра
 tetta_1 = round(optima.x[0], 4)
 tetta_2 = round(optima.x[1], 4)
 print()
-print("(4) : ", "tetta_1, tetta_2 : ",tetta_1, tetta_2)
+print("(4) : ", "tetta_1",tetta_1)
+print("tetta_2",tetta_2)
 
 # Посчитаем n*pi:
 p_full = np.array([integr.quad(get_norm_pdf, pairs[0][i], pairs[1][i], args = (tetta_1, tetta_2))[0] for i in range(n)])
@@ -80,18 +83,19 @@ np_res = np.round(np_res, 3)
 print()
 print("(5) : ", np_res)
 
-# Посчитаем ~delta
-delta = np.sum((m - np_res)**2 / np_res)
+# Cчитаем ~delta
+delta_ = np.sum((m - np_res)**2 / np_res)
 print()
-print("(6) : ", "delta = ", delta)
+print("(6) : ")
+print("delta_ = ", delta_)
 
 # Посчитаем p-value
-p_value = 1 - sps.chi2.cdf(delta, k - 1 - s)
+p_value = 1 - sps.chi2.cdf(delta_, k - 1 - s)
 print()
-print("p-value", p_value)
-print("p-value > alpha(0.05) => нет оснований отвергать")
+print("p-value = ", p_value)
+print("так как p-value > alpha(0.05) => нет оснований отвергать")
 print("-------------------------------------------")
-print("смотрим дальше, критерий Колмогорова для сложной гипотезы")
+print("смотрим дальше. Rритерий Колмогорова для сложной гипотезы")
 
 
 
@@ -100,7 +104,7 @@ xn = np.array([0]*5 + [1]*8 + [2]*6 + [3]*12 + [4]*14 + [5]*18 + [6]*11 + [7]*6 
 n = xn.size
 sqrt_n = n ** 0.5
 
-# Получаем из исходной выборки
+# Получаеncz из исходной выборки
 tetta_1 = np.mean(xn)
 tetta_2 = np.std(xn)
 print()
@@ -116,33 +120,43 @@ print("(3) : ", empf[:10])
 # F(x, vector my_teta)
 normf = norm_func(xn, tetta_1, tetta_2) 
 print()
-print("(4) : ", normf.shape)
+print("(4) : ")
+print(normf.shape)
 print()
-print("(5) : ", normf[:10])
+print("(5) : ")
+print(normf[:10])
 print()
 # ~delta
-delta = sqrt_n * max(np.max(np.abs(empf[:, 1] - normf[:, 1])), np.max(np.abs(empf[1:, 1] - normf[:-1, 1])), np.abs(1 - normf[-1, 1])) 
-print("(6) : ", np.abs(empf[:, 1] - normf[:, 1])[:10], np.abs(empf[1:, 1] - normf[:-1, 1])[:10], np.abs(1 - normf[-1, 1]))
+delta_ = sqrt_n * max(np.max(np.abs(empf[:, 1] - normf[:, 1])), np.max(np.abs(empf[1:, 1] - normf[:-1, 1])), np.abs(1 - normf[-1, 1])) 
+print("(6) : ")
+print(np.abs(empf[:, 1] - normf[:, 1])[:10], np.abs(empf[1:, 1] - normf[:-1, 1])[:10], np.abs(1 - normf[-1, 1]))
 print()
-print("(7) : ", "delta = ", delta)
+print("(7) : ")
+print("delta_ = ", delta_)
 print()
 # Воспользуемся параметрическим bootstapом
 N = 50000
 x_boot = np.array([(np.round(sps.norm.rvs(size = n, loc = tetta_1, scale = tetta_2)))%10 for i in range (N)])
-print("(8) : ", x_boot.shape)
+print("(8) : ")
+print(x_boot.shape)
 print()
 teta1_boot = np.mean(x_boot, axis=1)
 teta2_boot = np.std(x_boot, axis=1)
-print("(9) : ", teta1_boot.shape)
+print("(9) : ")
+print(teta1_boot.shape)
 print()
-print("(10) : ", teta1_boot[:5])
+print("(10) : ")
+print(teta1_boot[:5])
 print()
-print("(11) : ", teta2_boot[:5])
+print("(11) : ")
+print(teta2_boot[:5])
 print()
 empf_boot = np.apply_along_axis(func1d = emp_func, axis = 1, arr = x_boot, n_cur = n) 
-print("(12) : ", empf_boot.shape)
+print("(12) : ")
+print(empf_boot.shape)
 print()
-print("(13) : ", empf_boot[0][:10])
+print("(13) : ")
+print(empf_boot[0][:10])
 
 
 delta_boot = np.array([])
@@ -160,13 +174,14 @@ for i in range(N):
 # вариационный ряд
 delta_boot = np.sort(delta_boot) 
 print()
-print("(14) : ", delta_boot.shape)
+print("(14) : ")
+print(delta_boot.shape)
 print()
-l = len([delta for delta in delta_boot if delta >= delta])
-print("(15) : ", l)
+L = len([delta for delta in delta_boot if delta >= delta_])
+print("(15) : L =  ", L)
 print()
-p_value = l / N
-print("(16) : ", p_value)
+p_value = L / N
+print("(16) : ")
 
 
 print("p-value = ", p_value)
